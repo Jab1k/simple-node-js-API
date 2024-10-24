@@ -1,0 +1,34 @@
+doctype html
+html
+  head
+    title Registration
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css")
+  body
+    section.section
+      .container
+        .columns.is-centered
+          .column.is-4
+            .box
+              h1.title.is-4.has-text-centered Registration
+              form(action="/register" method="POST")
+                .field
+                  label.label(for="username") Username
+                  .control
+                    input.input(type="text" name="username" placeholder="Enter your username" required)
+                .field
+                  label.label(for="email") Email
+                  .control
+                    input.input(type="email" name="email" placeholder="Enter your email" required)
+                .field
+                  label.label(for="password") Password
+                  .control
+                    input.input(type="password" name="password" placeholder="Create a password" required)
+                .field
+                  label.label(for="confirmPassword") Confirm Password
+                  .control
+                    input.input(type="password" name="confirmPassword" placeholder="Confirm your password" required)
+                .field
+                  .control
+                    button.button.is-link.is-fullwidth(type="submit") Register

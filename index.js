@@ -46,11 +46,21 @@ app.post('/login', (req, res) => {
         connection.query('SELECT * FROM users', (err, rows) => {
             if (err) throw err;
             console.log('Data received from Db:\n');
-            console.log(rows);
-        });
+            console.log(rows[0]);
+        res.render('homepage', { users: rows, isAdmin: true });
 
+        });
     } else {
-        res.send('Invalid credentials!');
+        var password2 = createHash('sha256').update(`${password}`).digest('hex');
+        console.log(`${password2}`)
+        const query = 'SELECT username, password FROM users WHERE username = ? OR email = ? AND password = ?';
+        connection.query(query, [username, username, password2], (err, rows) => {
+            if (err) throw err;
+            console.log('Data received from Db:\n');
+            console.log(rows[0].username);
+            res.render('homepage', { user: rows[0], isAdmin: false, });
+
+        });
     }
 });
 
@@ -88,14 +98,14 @@ app.post('/register', (req, res) => {
             if (error) {
                 console.error('Error:', error);
             } else if (exists) {
-                res.render('error', { title: 'Error', error: "Username or Email already used!", url: "/register", button: "Try Harder!"});
+                res.render('error', { title: 'Error', error: "Username or Email already used!", url: "/register", button: "Try Harder!" });
             } else {
                 var password2 = createHash('sha256').update(`${password}`).digest('hex');
                 const employee = { username: username, email: email, password: password2, };
                 connection.query('INSERT INTO users SET ?', employee, (err, data) => {
                     if (err) throw err;
                     // console.log('Last insert ID:', res.insertId);
-                    res.render('error', { title: 'Complated', error: "You are complated a registeration!", url: "/login", button: "Login"})
+                    res.render('error', { title: 'Complated', error: "You are complated a registeration!", url: "/login", button: "Login" })
                 });
             }
         });

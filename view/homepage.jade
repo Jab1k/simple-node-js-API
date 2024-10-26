@@ -1,6 +1,3 @@
-//- index.pug
-doctype html
-html
 doctype html
 html
   head
@@ -40,16 +37,181 @@ html
         color: #fff;
         border-radius: 5px;
         text-align: center;
+        position: relative;
       }
       
-      p {
-        color: #777;
+      .button-container {
+        margin-top: 10px;
       }
+      
+      button {
+        padding: 5px 10px;
+        margin: 0 5px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        color: #fff;
+      }
+      
+      .edit {
+        background-color: #4CAF50;
+      }
+      
+      .view {
+        background-color: #2196F3; /* Blue */
+      }
+      
+      .delete {
+        background-color: #f44336;
+      }
+      
+      /* Modal Styles */
+      .modal {
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none; /* Hidden by default */
+      }
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+      }
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .ok-btn, .save-btn {
+        background-color: #4CAF50; /* Green */
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+      }
+      .ok-btn:hover, .save-btn:hover {
+        background-color: #45a049;
+      }
+      
+      /* Edit Form Styles */
+      .edit-form {
+        display: flex;
+        flex-direction: column; /* Stack inputs vertically */
+        gap: 15px; /* Space between inputs */
+        margin-top: 15px; /* Space above the form */
+      }
+      .edit-form label {
+        margin-bottom: 5px; /* Space below labels */
+      }
+
   body
     if isAdmin
       h1 Welcome, Admin! Here are all users:
       ul
         each user in users
-          li #{user} - #{user}
+          .button-container
+            li
+              span #{user.id} - #{user.username}
+              .button-container
+                button.view(onclick=`viewuser("${user.id}", "${user.username}", "${user.email}", "${user.password}")`) View
+                button.edit(onclick=`editUser("${user.id}", "${user.username}", "${user.email}", "${user.password}")`) Edit
+                button.delete(onclick=`deleteUser("${user.username}", "${user.id}")`) Delete
     else
-      h1 Welcome, #{user}!
+      h1 Welcome, #{user.username}!
+
+    // Modal for alerts
+    .modal#alertModal
+      .modal-content
+        span.close &times;
+        h2 User Information
+        p#modalMessage
+        div#editForm(style='display: none;')
+          .edit-form
+            label(for="editUsername") Username:
+            input#editUsername(type="text" placeholder="Username")
+            label(for="editEmail") Email:
+            input#editEmail(type="email" placeholder="Email")
+            label(for="editPassword") Password:
+            input#editPassword(type="password" placeholder="Password")
+          button.save-btn(onclick="saveChanges()") Save Changes
+
+    script.
+      const modal = document.getElementById("alertModal");
+      const closeButton = document.getElementsByClassName("close")[0];
+      const okButton = document.getElementsByClassName("ok-btn")[0];
+      const editForm = document.getElementById("editForm");
+      const editUsername = document.getElementById("editUsername");
+      const editEmail = document.getElementById("editEmail");
+      const editPassword = document.getElementById("editPassword");
+
+      function viewuser(id, username, email, password) {
+        modal.style.display = "block"; // Show the modal
+        // Update the alert message with the user's info
+        document.getElementById("modalMessage").innerText = `ID: ${id}\nUsername: ${username}\nEmail: ${email}\nPassword Hash: ${password}`; // Assuming password is safe to show
+        editForm.style.display = "none"; // Hide the edit form
+      }
+
+      function editUser(id, username, email, password) {
+        modal.style.display = "block"; // Show the modal
+        // Set input values for editing
+        editUsername.value = username;
+        editEmail.value = email;
+        editPassword.value = password; // Assuming password is safe to show
+        editForm.style.display = "block"; // Show the edit form
+        document.getElementById("modalMessage").innerText = `Editing User ID: ${id}`;
+      }
+
+      // Save changes after editing
+      function saveChanges() {
+        const updatedUsername = editUsername.value;
+        const updatedEmail = editEmail.value;
+        const updatedPassword = editPassword.value;
+
+        // Here you would typically make an AJAX request to your backend API to save changes
+
+
+
+        // Close the modal after saving
+        modal.style.display = "none";
+        // Optionally, refresh the user list or show a success message
+      }
+
+      // Open the alert when the delete button is clicked
+      function deleteUser(username, userId) {
+        modal.style.display = "block"; // Show the modal
+        // Update the alert message with the user's info
+        document.getElementById("modalMessage").innerText = `Are you sure you want to delete user ${username} with ID: ${userId}?`;
+        editForm.style.display = "none"; // Hide the edit form
+      }
+
+      // Close the alert when the close button is clicked
+      closeButton.onclick = function() {
+        modal.style.display = "none";
+      }
+
+      // Close the alert when the OK button is clicked
+      okButton.onclick = function() {
+        modal.style.display = "none";
+        // Add further code for deletion logic here, if confirmed
+      }
+
+      // Close the alert if the user clicks outside of the modal
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      }

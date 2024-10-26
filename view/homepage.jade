@@ -1,0 +1,55 @@
+//- index.pug
+doctype html
+html
+doctype html
+html
+  head
+    title Homepage
+    style.
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+      
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+      
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+      
+      ul {
+        list-style-type: none;
+        padding: 0;
+        margin-bottom: 20px;
+      }
+      
+      li {
+        padding: 10px 15px;
+        margin: 5px 0;
+        background-color: #ff6b6b;
+        color: #fff;
+        border-radius: 5px;
+        text-align: center;
+      }
+      
+      p {
+        color: #777;
+      }
+  body
+    if isAdmin
+      h1 Welcome, Admin! Here are all users:
+      ul
+        each user in users
+          li #{user} - #{user}
+    else
+      h1 Welcome, #{user}!

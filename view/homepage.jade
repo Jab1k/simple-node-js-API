@@ -9,7 +9,7 @@ html
         box-sizing: border-box;
         font-family: Arial, sans-serif;
       }
-      
+
       body {
         display: flex;
         flex-direction: column;
@@ -18,18 +18,18 @@ html
         height: 100vh;
         background-color: #f0f0f0;
       }
-      
+
       h1 {
         color: #333;
         margin-bottom: 20px;
       }
-      
+
       ul {
         list-style-type: none;
         padding: 0;
         margin-bottom: 20px;
       }
-      
+
       li {
         padding: 10px 15px;
         margin: 5px 0;
@@ -39,11 +39,11 @@ html
         text-align: center;
         position: relative;
       }
-      
+
       .button-container {
         margin-top: 10px;
       }
-      
+
       button {
         padding: 5px 10px;
         margin: 0 5px;
@@ -52,19 +52,19 @@ html
         cursor: pointer;
         color: #fff;
       }
-      
+
       .edit {
         background-color: #4CAF50;
       }
-      
+
       .view {
         background-color: #2196F3; /* Blue */
       }
-      
+
       .delete {
         background-color: #f44336;
       }
-      
+
       /* Modal Styles */
       .modal {
         position: fixed;
@@ -83,12 +83,14 @@ html
         padding: 20px;
         border: 1px solid #888;
         width: 80%;
+        border-radius: 5px;
       }
       .close {
         color: #aaa;
         float: right;
         font-size: 28px;
         font-weight: bold;
+        cursor: pointer;
       }
       .close:hover,
       .close:focus {
@@ -102,11 +104,12 @@ html
         padding: 10px 20px;
         border: none;
         cursor: pointer;
+        margin-top: 15px;
       }
       .ok-btn:hover, .save-btn:hover {
         background-color: #45a049;
       }
-      
+
       /* Edit Form Styles */
       .edit-form {
         display: flex;
@@ -123,17 +126,16 @@ html
       h1 Welcome, Admin! Here are all users:
       ul
         each user in users
-          .button-container
-            li
-              span #{user.id} - #{user.username}
-              .button-container
-                button.view(onclick=`viewuser("${user.id}", "${user.username}", "${user.email}", "${user.password}")`) View
-                button.edit(onclick=`editUser("${user.id}", "${user.username}", "${user.email}", "${user.password}")`) Edit
-                button.delete(onclick=`deleteUser("${user.username}", "${user.id}")`) Delete
+          li
+            span #{user.id} - #{user.username}
+            .button-container
+              button.view(onclick=`viewUser("${user.id}", "${user.username}", "${user.email}", "${user.password}", "${user.created_at}")`) View
+              button.edit(onclick=`editUser("${user.id}", "${user.username}", "${user.email}", "${user.password}")`) Edit
+              button.delete(onclick=`deleteUser("${user.username}", "${user.id}")`) Delete
     else
       h1 Welcome, #{user.username}!
 
-    // Modal for alerts
+    // Modal for alerts and edit form
     .modal#alertModal
       .modal-content
         span.close &times;
@@ -141,6 +143,7 @@ html
         p#modalMessage
         div#editForm(style='display: none;')
           .edit-form
+            input#editUserId(type="hidden")
             label(for="editUsername") Username:
             input#editUsername(type="text" placeholder="Username")
             label(for="editEmail") Email:
@@ -148,68 +151,84 @@ html
             label(for="editPassword") Password:
             input#editPassword(type="password" placeholder="Password")
           button.save-btn(onclick="saveChanges()") Save Changes
+        button.ok-btn(style="display: none;") OK
 
     script.
       const modal = document.getElementById("alertModal");
       const closeButton = document.getElementsByClassName("close")[0];
       const okButton = document.getElementsByClassName("ok-btn")[0];
       const editForm = document.getElementById("editForm");
+      const editUserId = document.getElementById("editUserId");
       const editUsername = document.getElementById("editUsername");
       const editEmail = document.getElementById("editEmail");
       const editPassword = document.getElementById("editPassword");
 
-      function viewuser(id, username, email, password) {
-        modal.style.display = "block"; // Show the modal
-        // Update the alert message with the user's info
-        document.getElementById("modalMessage").innerText = `ID: ${id}\nUsername: ${username}\nEmail: ${email}\nPassword Hash: ${password}`; // Assuming password is safe to show
-        editForm.style.display = "none"; // Hide the edit form
+      function viewUser(id, username, email, password, created_at) {
+        modal.style.display = "block";
+        document.getElementById("modalMessage").innerText = `ID: ${id}\nUsername: ${username}\nEmail: ${email}\nPassword Hash: ${password}\nCreated at: ${created_at}`;
+        editForm.style.display = "none";
+        okButton.style.display = "block";
       }
 
       function editUser(id, username, email, password) {
-        modal.style.display = "block"; // Show the modal
-        // Set input values for editing
+        modal.style.display = "block";
+        editUserId.value = id; // Set user ID
         editUsername.value = username;
         editEmail.value = email;
-        editPassword.value = password; // Assuming password is safe to show
-        editForm.style.display = "block"; // Show the edit form
+        editPassword.value = password;
+        editForm.style.display = "block";
+        okButton.style.display = "none";
         document.getElementById("modalMessage").innerText = `Editing User ID: ${id}`;
       }
 
-      // Save changes after editing
       function saveChanges() {
+        const userId = editUserId.value; // Get user ID
         const updatedUsername = editUsername.value;
         const updatedEmail = editEmail.value;
         const updatedPassword = editPassword.value;
 
-        // Here you would typically make an AJAX request to your backend API to save changes
-
-
-
-        // Close the modal after saving
-        modal.style.display = "none";
-        // Optionally, refresh the user list or show a success message
+        fetch('/change', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId, username: updatedUsername, email: updatedEmail, password: updatedPassword }) // Include userId
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data); // handle response if needed
+          modal.style.display = "none";
+          location.reload(); // reload to reflect changes
+        })
+        .catch(error => console.error('Error:', error));
       }
 
-      // Open the alert when the delete button is clicked
       function deleteUser(username, userId) {
-        modal.style.display = "block"; // Show the modal
-        // Update the alert message with the user's info
+        modal.style.display = "block";
         document.getElementById("modalMessage").innerText = `Are you sure you want to delete user ${username} with ID: ${userId}?`;
-        editForm.style.display = "none"; // Hide the edit form
+        editForm.style.display = "none";
+        okButton.style.display = "block";
+
+        okButton.onclick = function () {
+          fetch('/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log(data); // handle response if needed
+            modal.style.display = "none";
+            location.reload(); // reload the page to reflect changes
+          })
+          .catch(error => console.error('Error:', error));
+        };
       }
 
-      // Close the alert when the close button is clicked
       closeButton.onclick = function() {
         modal.style.display = "none";
       }
 
-      // Close the alert when the OK button is clicked
-      okButton.onclick = function() {
-        modal.style.display = "none";
-        // Add further code for deletion logic here, if confirmed
-      }
-
-      // Close the alert if the user clicks outside of the modal
       window.onclick = function(event) {
         if (event.target == modal) {
           modal.style.display = "none";

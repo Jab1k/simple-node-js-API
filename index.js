@@ -73,6 +73,40 @@ app.post('/delete', (req, res) => {
     });
 });
 
+app.get('/register', (req, res) => {
+    res.render('register');
+});
+app.post('/register', (req, res) => {
+    const { username, email, password, confirmPassword } = req.body;
+
+    // Simple validation
+    if (password === confirmPassword) {
+
+        checkUser(username, email, (error, exists) => {
+            if (error) {
+                console.error('Error:', error);
+            } else if (exists) {
+                res.render('error', { title: 'Error', error: "Username or Email already used!", url: "/register", button: "Try Harder!" });
+            } else {
+                var password2 = createHash('sha256').update(`${password}`).digest('hex');
+                const employee = { username: username, email: email, password: password2, };
+                connection.query('INSERT INTO users SET ?', employee, (err, data) => {
+                    if (err) throw err;
+                    // console.log('Last insert ID:', res.insertId);
+                    res.render('error', { title: 'Complated', error: "You are complated a registeration!", url: "/login", button: "Login" })
+                });
+            }
+        });
+
+
+
+
+    } else {
+        res.send('Passwords do not match. Please try again.');
+    }
+});
+
+
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });

@@ -46,67 +46,63 @@ app.post('/login', (req, res) => {
         const query = 'SELECT username, password FROM users WHERE username = ? OR email = ? AND password = ?';
         connection.query(query, [username, username, passwordHash], (err, rows) => {
             if (err) throw err;
-            if (rows.length > 0) {
-                res.render('homepage', { users: rows, isAdmin: false });
-            } else {
-                res.send('Invalid credentials');
-            }
+            res.render('homepage', { user: rows[0], isAdmin: false });
         });
     }
 });
 
-app.post('/change', (req, res) => {
-    const { userId, username, email, password } = req.body; // Get userId from request
-    const passwordHash = createHash('sha256').update(password).digest('hex');
-    const updateQuery = 'UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?'; // Use ID in the WHERE clause
-    connection.query(updateQuery, [username, email, passwordHash, userId], (err, result) => { // Pass userId
-        if (err) return res.status(500).send({ error: 'Failed to update user' });
-        res.send({ success: true, message: 'User updated successfully' });
+function checkUser(username, email, callback) {
+    const query = 'SELECT * FROM users WHERE username = ? OR email = ?';
+    connection.query(query, [username, email], (error, results) => {
+        if (error) return callback(error, null);
+        callback(null, results.length > 0);
     });
-});
-
-app.post('/delete', (req, res) => {
-    const { userId } = req.body;
-    connection.query('DELETE FROM users WHERE id = ?', [userId], (err, result) => {
-        if (err) return res.status(500).send({ error: 'Failed to delete user' });
-        res.send({ success: true, message: 'User deleted successfully' });
-    });
-});
+}
 
 app.get('/register', (req, res) => {
     res.render('register');
 });
+
 app.post('/register', (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
-
-    // Simple validation
     if (password === confirmPassword) {
-
         checkUser(username, email, (error, exists) => {
-            if (error) {
-                console.error('Error:', error);
-            } else if (exists) {
-                res.render('error', { title: 'Error', error: "Username or Email already used!", url: "/register", button: "Try Harder!" });
+            if (error) console.error('Error:', error);
+            else if (exists) {
+                res.render('error', { title: 'Error', error: "Username or Email already used!", url: "/register", button: "Try Again!" });
             } else {
-                var password2 = createHash('sha256').update(`${password}`).digest('hex');
-                const employee = { username: username, email: email, password: password2, };
-                connection.query('INSERT INTO users SET ?', employee, (err, data) => {
+                const passwordHash = createHash('sha256').update(password).digest('hex');
+                const newUser = { username, email, password: passwordHash };
+                connection.query('INSERT INTO users SET ?', newUser, (err) => {
                     if (err) throw err;
-                    // console.log('Last insert ID:', res.insertId);
-                    res.render('error', { title: 'Complated', error: "You are complated a registeration!", url: "/login", button: "Login" })
+                    res.render('error', { title: 'Completed', error: "Registration complete!", url: "/login", button: "Login" });
                 });
             }
         });
-
-
-
-
     } else {
         res.send('Passwords do not match. Please try again.');
     }
 });
 
-
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+// Update user information
+app.post('/change', (req, res) => {
+    const { username, email, password } = req.body;
+    const passwordHash = createHash('sha256').update(password).digest('hex');
+    const updateQuery = 'UPDATE users SET username = ?, email = ?, password = ? WHERE username = ?';
+    connection.query(updateQuery, [username, email, passwordHash, username], (err, result) => {
+        if (err) return res.status(500).send({ error: 'Failed to update user' });
+        res.send({ success: true, message: 'User updated successfully' });
+    });
 });
+
+// Delete user
+app.post('/delete', (req, res) => {
+    const { userId } = req.body;
+    const deleteQuery = 'DELETE FROM users WHERE id = ?';
+    connection.query(deleteQuery, [userId], (err, result) => {
+        if (err) return res.status(500).send({ error: 'Failed to delete user' });
+        res.send({ success: true, message: 'User deleted successfully' });
+    });
+});
+
+app.listen(port, () => console.log(`Listening on port ${port}...`));
